@@ -30,10 +30,8 @@ using System.Collections;
 public class FeedMe : MonoBehaviour
 {
 #region Variables
-#region URLS
 	// The URL to where the feed is located
-	public string getFeedURL = "http://localhost/feed.xml";
-#endregion
+	public string feedURL = "http://localhost/feed.xml";
 	// A Struc of what every feed is made up of
 	private struct feedThis
 	{
@@ -46,13 +44,13 @@ public class FeedMe : MonoBehaviour
 	// Should the feed only update once per game play
 	public bool updateOnce = false;
 	// How long till the next update
-	public int minutesToUpdate = 60;
+	public int minutesTillUpdate = 60;
 	// This is used to make sure that the text loaded doesn't fill more than the array
 	private byte feedLength = 9;
 	// This is the array of a struc of variables used to hold the feeds
 	private feedThis[] theFeed = new feedThis[9];
 	// When the feed is updated the time is set here plus the minutes to update
-	private float timeSinceLastUpdate = 0;
+	private float timeSinceLastUpdate = 0.0f;
 	// if the feed must be updated
 	private bool updateFeed = true;
 	// if the feed is updating
@@ -60,9 +58,8 @@ public class FeedMe : MonoBehaviour
 	// if there is no errors from the WWW connection
 	private bool errorFree = true;
 	// used to measure the number of elements within the array
-	private byte i = 0;
+	private byte arrayLength = 0;
 #endregion
-	
 #region GUI
 	// Skin for gui
 	public GUISkin mySkin;
@@ -85,7 +82,6 @@ public class FeedMe : MonoBehaviour
 	private GUIContent reloadBtn;
 #endregion
 #endregion
-	
 #region Standard Methods
 	void Start()
 	{
@@ -115,7 +111,7 @@ public class FeedMe : MonoBehaviour
 			{
 				// Resets the vars
 				updateFeed = true;
-				i = 0;
+				arrayLength = 0;
 				// Starts the getFeed Coroutine
 				StartCoroutine(getFeed());
 			}
@@ -170,7 +166,7 @@ public class FeedMe : MonoBehaviour
 		{
 			// Resets the vars
 			updateFeed = true;
-			i = 0;
+			arrayLength = 0;
 			// Starts the getFeed Coroutine
 			StartCoroutine(getFeed());
 		}
@@ -189,7 +185,7 @@ public class FeedMe : MonoBehaviour
 			// This form is simply to make sure that WWW gets the latest version of the xml document
 			WWWForm form = new WWWForm();
 			form.AddField("number", 1221);
-    		WWW feedPost = new WWW(getFeedURL, form);
+    		WWW feedPost = new WWW(feedURL, form);
 			// Returns control to rest of program until it is finished downloading
     		yield return feedPost;
 			// if there are no errors runs through the function
@@ -200,29 +196,29 @@ public class FeedMe : MonoBehaviour
 				// For my use, it extracts the title, date, author and message.
 				// it stores this in an array of struc type declared above
 				TinyXmlReader reader = new TinyXmlReader(feedPost.data);
-				while(reader.Read("Feeds") && (i < feedLength))
+				while(reader.Read("Feeds") && (arrayLength < feedLength))
 				{
 					while(reader.Read("Feed"))
 					{
 						if(reader.tagName == "Title" && reader.isOpeningTag)
 						{
-							theFeed[i].Title = reader.content;
+							theFeed[arrayLength].Title = reader.content;
 						}
 						if(reader.tagName == "Date" && reader.isOpeningTag)
 						{
-							theFeed[i].Date = reader.content;
+							theFeed[arrayLength].Date = reader.content;
 						}
 						if(reader.tagName == "Author" && reader.isOpeningTag)
 						{
-							theFeed[i].Author = reader.content;
+							theFeed[arrayLength].Author = reader.content;
 						}
 						if(reader.tagName == "Message" && reader.isOpeningTag)
 						{
-							theFeed[i].Message = reader.content;
+							theFeed[arrayLength].Message = reader.content;
 						}
 					}
 					// Increments the counter variable for the array
-					i++;
+					arrayLength++;
 				}
 			}
 			// if there was an error
@@ -239,7 +235,7 @@ public class FeedMe : MonoBehaviour
 			updateFeed = false;
 			updating = false;
 			// sets the last update time
-			timeSinceLastUpdate = Time.time + (60 * minutesToUpdate);
+			timeSinceLastUpdate = Time.time + (60 * minutesTillUpdate);
 			// Destroys the feedPost...
 			feedPost.Dispose();
 		}
@@ -257,7 +253,7 @@ public class FeedMe : MonoBehaviour
 		if(errorFree)
 		{
 			// loops through the array adding the feed data to the feed string
-			for(int x=0;x<=i-1;x++)
+			for(int x=0;x<=arrayLength-1;x++)
 			{
 				Feeds = Feeds + theFeed[x].Title + " - " + theFeed[x].Date + "\n"
 							+ "Author: " + theFeed[x].Author + "\n" + theFeed[x].Message + "\n\n";
